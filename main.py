@@ -63,19 +63,17 @@ def init_ragflow_session() -> Session:
 
 
 def remove_tags(input: str) -> str:
-    pattern1 = r'<think>.*?</think>'
-    output = re.sub(pattern1, '', input, flags=re.DOTALL)
-    pattern2 = r'##\d+?\$\$'
-    output = re.sub(pattern2, '', output, flags=re.DOTALL)
+    pattern1 = r"<think>.*?</think>"
+    output = re.sub(pattern1, "", input, flags=re.DOTALL)
+    pattern2 = r"##\d+?\$\$"
+    output = re.sub(pattern2, "", output, flags=re.DOTALL)
 
     return output
 
 
 def get_eval_dataset(session: Session) -> EvaluationDataset:
-    qa = zip(gpt4o_questions, gpt4o_gts) if QA_GPT else zip(questions, gts)
-
     samples = []
-    for question, truth in qa:
+    for question, truth in QA_DATA[QA_SOURCE]:
         res = session.ask(question, stream=True)
         answer = ""
         contexts = []
@@ -104,7 +102,9 @@ def get_eval_dataset(session: Session) -> EvaluationDataset:
     return eval_dataset
 
 
-def eval_performance(chat, embd, eval_dataset) -> None:
+def eval_performance(
+    chat: ChatOllama, embd: LangchainEmbeddingsWrapper, eval_dataset: EvaluationDataset
+) -> None:
     metrics = [
         context_precision,
         context_recall,
@@ -145,16 +145,21 @@ if __name__ == "__main__":
     RAGFLOW_SESSION = os.getenv("RAGFLOW_SESSION")
 
     # QA
-    QA_GPT = False
+    QA_DATA = {
+        "default": (questions, gts),
+        "gpt4o": (gpt4o_questions, gpt4o_gts)
+    }
+    # QA_SOURCE = "default"
+    QA_SOURCE = "gpt4o"
 
     # LOG
     log_level = logging.WARNING
     logging.basicConfig(
         level=log_level,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
         handlers=[
-            logging.FileHandler(Path(__file__).parent / 'ragas.log', mode='a', encoding='utf-8'),
+            logging.FileHandler(Path(__file__).parent / "ragas.log", mode="a", encoding="utf-8"),
             logging.StreamHandler()
         ]
     )
