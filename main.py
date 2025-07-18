@@ -146,8 +146,8 @@ if __name__ == "__main__":
 
     # QA
     QA_DATA = {
-        "default": (questions, gts),
-        "gpt4o": (gpt4o_questions, gpt4o_gts)
+        "default": zip(questions, gts),
+        "gpt4o": zip(gpt4o_questions, gpt4o_gts)
     }
     # QA_SOURCE = "default"
     QA_SOURCE = "gpt4o"
